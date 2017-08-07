@@ -1,7 +1,5 @@
 "use strict";
 
-const async = require('async');
-
 const models = require('../../../models/'),
     CanvasModel = models.Canvas,
     UsersModel = models.Users;
@@ -21,17 +19,16 @@ module.exports = {
      * @description Link account.
      */
     linkAccount: (req, res, next) => {
-        const userId = req.body['userId'];
-        const token = req.body['token'];
+        const {userId} = req.body;
+        const {token} = req.body;
 
-        async.waterfall([
-            (callback) => {
-                UsersModel.linkAccount(userId, token, callback);
-            }
-        ], (err, result) => {
-            if (err) next(err);
-            else SuccessHandler.handleAdd(res, next, result);
-        });
+        UsersModel.linkAccount(userId, token)
+            .then((result) => {
+                SuccessHandler.handleAdd(res, next, result);
+            })
+            .catch((err) => {
+                next(err);
+            });
     },
 
     /**
@@ -44,19 +41,18 @@ module.exports = {
      * @description Import.
      */
     import: (req, res, next) => {
-        const token = req.body['token'];
+        const {token} = req.body;
 
-        async.waterfall([
-            (callback) => {
-                CanvasModel.fetchCourses(token, callback);
-            },
-            (courses, callback) => {
-                UsersModel.saveCourses(courses, token, callback);
-            }
-        ], (err, result) => {
-            if (err) next(err);
-            else SuccessHandler.handleAdd(res, next, result);
-        });
+        CanvasModel.fetchCourses(token)
+            .then((courses) => {
+                return UsersModel.saveCourses(courses, token);
+            })
+            .then((result) => {
+                SuccessHandler.handleAdd(res, next, result);
+            })
+            .catch((err) => {
+                next(err);
+            });
     },
 
     /**
@@ -69,15 +65,14 @@ module.exports = {
      * @description Get courses.
      */
     getCourses: (req, res, next) => {
-        const token = req.query['token'];
+        const {token} = req.query;
 
-        async.waterfall([
-            (callback) => {
-                UsersModel.getCourses(token, callback);
-            }
-        ], (err, result) => {
-            if (err) next(err);
-            else SuccessHandler.handleGet(res, next, result);
-        });
+        UsersModel.getCourses(token)
+            .then((result) => {
+                SuccessHandler.handleGet(res, next, result);
+            })
+            .catch((err) => {
+                next(err);
+            });
     }
 };
